@@ -6,18 +6,43 @@ const { Configuration, OpenAIApi } = require("openai");
 require("dotenv").config();
 var app = express();
 
-app.get("/", async function (req, res) {
-  const data = await extractTextFromTheUrl(
-    "https://www.healthline.com/health/becoming-vegetarian"
-  );
+// Cors is a library that let us make cross-origin requests
+// We need to limit the origins (websites) that can make requests to our API
+// https://www.npmjs.com/package/cors
+var cors = require("cors");
+var whitelist = ['http://localhost:3000', "http://localhost:3001" /** other domains if any */]
+var corsOptions = {
+  credentials: true,
+  origin: function ( origin, callback ) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(null, true)
+      //callback(new Error('Not allowed by CORS'))
+    }
+  }
+}
+app.use(cors(corsOptions)); // !! SHOULD BE CHANGE TO ONLY ALLOW OUR FRONTEND !!
 
-  res.send(data);
+
+
+app.get("/", async function (req, res) {
+  res.send("Welcome to the AI search engine server. What are you doing here?");
 });
 
 var server = app.listen(LOCAL_HOST_PORT, function () {
   var port = server.address().port;
   console.log("Example app listening at http://localhost:%s", port);
 });
+
+
+app.get("/getGoogleResults", async function (req, res) {
+  const query = req.query.query;
+  const googleResponse = await getGoogleResponse(query);
+  res.send(googleResponse.items);
+});
+
+
 
 /**
  * This function will get the response from google search engine based on the query
